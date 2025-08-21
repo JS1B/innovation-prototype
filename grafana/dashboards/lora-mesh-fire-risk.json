@@ -19,6 +19,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "links": [],
+  "liveNow": true,
   "panels": [
     {
       "datasource": {
@@ -41,10 +42,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -52,7 +49,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
+        "h": 14,
         "w": 16,
         "x": 0,
         "y": 0
@@ -62,7 +59,7 @@
         "basemap": {
           "config": {},
           "name": "Layer 0",
-          "type": "osm-standard"
+          "type": "default"
         },
         "controls": {
           "mouseWheelZoom": true,
@@ -72,7 +69,94 @@
           "showScale": false,
           "showZoom": true
         },
-        "layers": [],
+        "layers": [
+          {
+            "config": {},
+            "name": "OpenStreetMap",
+            "opacity": 0.9,
+            "type": "osm-standard"
+          },
+          {
+            "config": {
+              "location": {
+                "field": "latitude",
+                "longitudeField": "longitude",
+                "mode": "coords"
+              },
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-purple"
+                },
+                "opacity": 0.9,
+                "size": {
+                  "fixed": 3,
+                  "max": 100,
+                  "min": 1
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "B"
+            },
+            "location": {
+              "latitude": "latitude {_start=\"1970-01-01 00:00:00 +0000 UTC\", _stop=\"2025-08-21 09:13:24.636178487 +0000 UTC\", host=\"node-000\"}",
+              "longitude": "longitude {_start=\"1970-01-01 00:00:00 +0000 UTC\", _stop=\"2025-08-21 09:13:24.636178487 +0000 UTC\", host=\"node-000\"}",
+              "mode": "auto"
+            },
+            "name": "Sensor Nodes",
+            "query": {
+              "refId": "B"
+            },
+            "tooltip": {
+              "mode": "details"
+            },
+            "type": "markers"
+          },
+          {
+            "config": {
+              "location": {
+                "field": "latitude",
+                "longitudeField": "longitude",
+                "mode": "coords"
+              },
+              "style": {
+                "color": {
+                  "field": "fire_likelihood_pct",
+                  "mode": "thresholds"
+                },
+                "size": {
+                  "fixed": 10,
+                  "max": 80,
+                  "min": 1
+                },
+                "symbol": {
+                  "field": "",
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "A"
+            },
+            "location": {
+              "latitude": "server_metrics latitude {_start=\"1970-01-01 00:00:00 +0000 UTC\", _stop=\"2025-08-21 09:13:24.630307991 +0000 UTC\"}",
+              "longitude": "server_metrics longitude {_start=\"1970-01-01 00:00:00 +0000 UTC\", _stop=\"2025-08-21 09:13:24.630307991 +0000 UTC\"}",
+              "mode": "auto"
+            },
+            "name": "Predicted Fire Location",
+            "query": {
+              "refId": "A"
+            },
+            "tooltip": {
+              "mode": "details"
+            },
+            "type": "markers"
+          }
+        ],
         "tooltip": {
           "mode": "details"
         },
@@ -94,14 +178,30 @@
           "query": "from(bucket: v.defaultBucket)\n  |> range(start: 0)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"server_metrics\")\n  |> last()\n  |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
           "queryType": "flux",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: v.defaultBucket)\n  |> range(start: 0)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sensor_readings\")\n  |> filter(fn: (r) => r[\"_field\"] == \"latitude\" or r[\"_field\"] == \"longitude\")\n  |> group(columns: [\"host\", \"_field\"])\n  |> last()\n  |> pivot(rowKey:[\"_time\", \"host\"], columnKey: [\"_field\"], valueColumn: \"_value\")",
+          "queryType": "flux",
+          "refId": "B"
         }
       ],
       "title": "Latest Fire Risk Location & Radius",
       "type": "geomap"
     },
     {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P951FEA4DE68E13C5"
+      },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -127,18 +227,16 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 8,
         "x": 16,
         "y": 0
       },
       "id": 2,
       "options": {
-        "colorMode": "thresholds",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -146,9 +244,9 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
       "pluginVersion": "11.1.0",
       "targets": [
@@ -163,7 +261,7 @@
         }
       ],
       "title": "Current Fire Likelihood",
-      "type": "stat"
+      "type": "gauge"
     },
     {
       "fieldConfig": {
@@ -187,10 +285,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 8,
         "x": 16,
-        "y": 6
+        "y": 7
       },
       "id": 3,
       "options": {
@@ -233,7 +331,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
           "custom": {
             "axisBorderShow": false,
@@ -244,14 +342,14 @@
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
-            "gradientMode": "none",
+            "gradientMode": "scheme",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -267,7 +365,7 @@
               "mode": "off"
             }
           },
-          "decimals": 1,
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -287,18 +385,18 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 8,
         "x": 0,
-        "y": 12
+        "y": 14
       },
       "id": 4,
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "displayMode": "hidden",
+          "placement": "right",
+          "showLegend": false
         },
         "tooltip": {
           "mode": "single",
@@ -368,6 +466,96 @@
               },
               {
                 "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "mps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"sensor_readings\")\n  |> filter(fn: (r) => r[\"host\"] == \"${host}\")\n  |> filter(fn: (r) => r[\"_field\"] == \"wind_speed_ms\")",
+          "queryType": "flux",
+          "refId": "A"
+        }
+      ],
+      "title": "Wind Speed (m/s) - ${host}",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "InfluxDB"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
                 "value": 80
               }
             ]
@@ -377,10 +565,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 12
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 14
       },
       "id": 5,
       "options": {
@@ -437,13 +625,13 @@
     ]
   },
   "time": {
-    "from": "now-6h",
-    "to": "now"
+    "from": "2025-08-21T08:47:04.792Z",
+    "to": "2025-08-21T09:17:04.792Z"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "LoRa Mesh - Fire Risk Analysis",
   "uid": "lora-mesh-fire-risk",
-  "version": 7,
+  "version": 15,
   "weekStart": ""
 }

@@ -8,15 +8,15 @@ import pandas as pd
 # -------------------
 # Config
 # -------------------
-N_NODES = 2
-DATA_FREQ_S = 60 * 10  # 60 * 10 minutes
-DATA_START_DATE = "2025-08-20T00:00:00Z"
+N_NODES = 3
+DATA_FREQ_S = 5  # 60 * 10 minutes
+DATA_START_DATE = "2025-08-21T06:00:00Z"
 DATA_END_DATE = "2025-08-23T00:00:00Z"
 DATA_DIR = "data"
 
-# Base location (San Francisco downtown-ish)
-BASE_LAT = 37.77495
-BASE_LON = -122.4193
+# Base location (Denmark, Sjaelland, Deer Park)
+BASE_LAT = 55.785926
+BASE_LON = 12.572046
 
 RANDOM_SEED = 42  # Set to None for non-deterministic
 
@@ -174,7 +174,7 @@ def main():
         sensor_header,
     )
 
-    # 3. Generate and transform server metrics (NOW WITH GEO DATA)
+    # 3. Generate and transform server metrics
     server_rows = []
     for t, g in sensor_df_wide.groupby("_time", sort=True):
         clat, clon = g["latitude"].mean(), g["longitude"].mean()
